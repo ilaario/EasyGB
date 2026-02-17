@@ -12,16 +12,16 @@ CFLAGS  := -D_GNU_SOURCE -std=c11 -I./headers
 SRC := src/cart.c src/mmu.c src/ppu.c src/cpu.c src/main.c
 BIN := bin/easygb
 
-.PHONY: all run clear
+.PHONY: all
 
 all: $(BIN)
 
 $(BIN): $(SRC)
 	@mkdir -p bin
-	gcc $(CFLAGS) -o $(BIN) $(SRC) $(LIBS)
+	gcc $(GFLAGS_DEBUG) -o $(BIN) $(SRC) $(LIBS)
 
 run_pk: $(BIN)
 	$(BIN) input/Pokemon_Red.gb
 
-clear:
+clean:
 	rm -rf bin

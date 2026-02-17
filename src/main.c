@@ -9,6 +9,9 @@ int main(int argc, char const *argv[]){
         exit(EXIT_FAILURE);
     }
 
+    printf("%s\n", argv[1]);
+
+    read_cart(argv[1]);
     
     return 0;
 }
