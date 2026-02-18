@@ -19,8 +19,8 @@ struct header{
     uint8_t   cgb_flag;
     uint8_t   sgb_flag;
     uint8_t   cart_type;
-    uint8_t   rom_size;
-    uint8_t   ram_size;
+    uint32_t  rom_size;
+    uint32_t  ram_size;
     uint8_t   checksum;
 };
 
