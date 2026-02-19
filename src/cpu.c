@@ -155,6 +155,7 @@ cpu cpu_init(bus b){
 
     // internal state
     rcpu -> halted = false;
+    rcpu -> halt_bug = false;
     rcpu -> ime = true;
     rcpu -> ime_pending = 0;
     rcpu -> cycles = 0;
@@ -253,7 +254,7 @@ static inline uint8_t cpu_read_IE(cpu cpu) {
 static inline uint8_t cpu_read_pending_interrupts(cpu cpu) {
     uint8_t IF = cpu_read_IF(cpu);
     uint8_t IE = cpu_read_IE(cpu);
-    return IF & IE;
+    return (uint8_t)(IF & IE & 0x1Fu);
 }
 
 bool interrupt_should_fire(cpu c){
@@ -332,7 +333,7 @@ static inline void cpu_apply_ime_delay(cpu c) {
     }
 }
 
-void cpu_step(cpu c){
+int cpu_step(cpu c){
     uint64_t step = dbg_next_step();
 #ifndef DEBUGLOG
     (void)step;
@@ -362,10 +363,11 @@ void cpu_step(cpu c){
     if(c -> halted){
         int cycles_before = c -> cycles;
         handle_interrupts(c);
-        if (c -> cycles == cycles_before) {
+        if (c->halted && c->cycles == cycles_before) {
             c -> cycles += 4;
         }
-        bus_tick(c -> mbus, c -> cycles - cycles_before_step);
+        int step_cycles = c->cycles - cycles_before_step;
+        bus_tick(c -> mbus, step_cycles);
         cpu_apply_ime_delay(c);
 
 #ifdef DEBUGLOG
@@ -374,12 +376,13 @@ void cpu_step(cpu c){
             cpu_trace_log_end(step, after.halted ? "HALT_WAIT" : "HALT_WAKE", &before, &after);
         }
 #endif
-        return;
+        return step_cycles;
     }
 
-    if(interrupt_should_fire(c)){
+    if(!c->halt_bug && interrupt_should_fire(c)){
         cpu_service_interrupt(c);
-        bus_tick(c -> mbus, c -> cycles - cycles_before_step);
+        int step_cycles = c->cycles - cycles_before_step;
+        bus_tick(c -> mbus, step_cycles);
         cpu_apply_ime_delay(c);
 
 #ifdef DEBUGLOG
@@ -388,13 +391,18 @@ void cpu_step(cpu c){
             cpu_trace_log_end(step, "INTERRUPT", &before, &after);
         }
 #endif
-        return;
+        return step_cycles;
     }
 
     uint8_t opcode = cpu_fetch8(c);
+    if (c->halt_bug) {
+        c->halt_bug = false;
+        c->PC = (uint16_t)(c->PC - 1);
+    }
 
     execute_opcode(c, opcode);
-    bus_tick(c -> mbus, c -> cycles - cycles_before_step);
+    int step_cycles = c->cycles - cycles_before_step;
+    bus_tick(c -> mbus, step_cycles);
     cpu_apply_ime_delay(c);
 
 #ifdef DEBUGLOG
@@ -407,6 +415,7 @@ void cpu_step(cpu c){
         }
     }
 #endif
+    return step_cycles;
 }
 
 uint8_t cpu_fetch8(cpu c){

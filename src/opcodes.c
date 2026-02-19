@@ -544,7 +544,17 @@ static void execute_base(cpu c, uint8_t opcode) {
 
     case 1:
         if (opcode == 0x76) { // HALT
-            c->halted = true;
+            uint8_t IF = bus_read8(c->mbus, 0xFF0F);
+            uint8_t IE = bus_read8(c->mbus, 0xFFFF);
+            uint8_t pending = (uint8_t)(IF & IE & 0x1Fu);
+
+            if (!c->ime && pending != 0) {
+                c->halt_bug = true;
+                c->halted = false;
+            } else {
+                c->halted = true;
+                c->halt_bug = false;
+            }
             c->cycles += 4;
             return;
         }

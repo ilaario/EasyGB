@@ -12,7 +12,9 @@
 
 #include "bus.h"
 
+#ifndef KIB
 #define KIB(x) ((x) * 1024)
+#endif
 
 enum reg16 {
     REG_BC,
@@ -42,6 +44,7 @@ struct CPU {
 
     // flags
     bool halted;
+    bool halt_bug;
     bool ime;
     uint8_t ime_pending;
     int  cycles;
@@ -58,7 +61,7 @@ void write_reg16(cpu c, enum reg16 reg, uint16_t val);
 void set_flag(cpu c, enum flag f, bool val);
 bool get_flag(cpu c, enum flag f);
 
-void cpu_step(cpu c);
+int cpu_step(cpu c);
 uint8_t cpu_fetch8(cpu c);
 uint16_t cpu_fetch16(cpu c);
 

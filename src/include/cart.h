@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef KIB
 #define KIB(x) ((x) * 1024)
+#endif
 
 struct header{
     

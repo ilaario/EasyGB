@@ -21,6 +21,7 @@ struct Bus_internal {
 
     uint16_t div_counter;
     uint16_t tima_counter;
+    uint16_t ppu_counter;
 };
 
 #ifdef DEBUGLOG
@@ -68,6 +69,18 @@ static void handle_special_io_write(bus b, uint16_t addr, uint8_t val) {
     if (addr == 0xFF07) {
         b->mem->io[0x07] = (uint8_t)((val & 0x07u) | 0xF8u);
         b->mem->tima_counter = 0;
+    }
+
+    // LY is read-only; writes reset it.
+    if (addr == 0xFF44) {
+        b->mem->io[0x44] = 0x00;
+        b->mem->ppu_counter = 0;
+    }
+
+    // When LCD is disabled, LY resets to 0 and the PPU timing state stops.
+    if (addr == 0xFF40 && (val & 0x80u) == 0u) {
+        b->mem->io[0x44] = 0x00;
+        b->mem->ppu_counter = 0;
     }
 
     // Serial output (SB/SC): used by many test ROMs (e.g. blargg).
@@ -264,6 +277,7 @@ bus bus_init(cartridge cart) {
     rbus->mem->ie = 0x00;
     rbus->mem->div_counter = 0;
     rbus->mem->tima_counter = 0;
+    rbus->mem->ppu_counter = 0;
 
     // Function pointers (the bus logic)
     // li inizializzi tu altrove
@@ -339,6 +353,9 @@ uint8_t bus_read8(bus b, uint16_t addr) {
     // FF00–FF7F: IO registers
     if (addr <= 0xFF7F) {
         uint8_t v = b->mem->io[addr - 0xFF00];
+        if (addr == 0xFF0F) {
+            v = (uint8_t)(v | 0xE0u);
+        }
         BUS_LOG_R8(addr, v);
         return v;
     }
@@ -409,6 +426,9 @@ void bus_write8(bus b, uint16_t addr, uint8_t val) {
     // FF00–FF7F: IO registers
 
     if (addr <= 0xFF7F) {
+        if (addr == 0xFF0F) {
+            val = (uint8_t)((val & 0x1Fu) | 0xE0u);
+        }
         b->mem->io[addr - 0xFF00] = val;
         handle_special_io_write(b, addr, val);
         BUS_LOG_W8(addr, val);
@@ -439,6 +459,11 @@ void bus_write16(bus b, uint16_t addr, uint16_t val) {
 
     bus_write8(b, addr,     low);
     bus_write8(b, addr + 1, high);
+}
+
+void bus_set_ly(bus b, uint8_t ly) {
+    b->mem->io[0x44] = ly;
+    BUS_LOG_W8(0xFF44, ly);
 }
 
 static inline uint16_t timer_period_cycles(uint8_t tac) {
