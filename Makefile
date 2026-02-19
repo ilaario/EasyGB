@@ -62,5 +62,11 @@ run_cpu_instrs_sing_10: $(BIN)
 run_cpu_instrs_sing_11: $(BIN)
 	$(BIN) "input/test_roms/cpu_instrs/individual/11-op a,(hl).gb"
 
+run_cpu_instrs_timing: $(BIN)
+	$(BIN) "input/test_roms/instr_timing/instr_timing.gb"
+
+run_cpu_halt_bug: $(BIN)
+	$(BIN) "input/test_roms/halt_bug.gb"
+
 clean:
 	rm -rf bin
