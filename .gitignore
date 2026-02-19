@@ -1,1 +1,6 @@
 /bin
+/log
+/input/test_roms
+/input
+*.gb
+*.s

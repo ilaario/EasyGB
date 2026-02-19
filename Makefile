@@ -1,27 +1,66 @@
 CC = gcc
-CFLAGS = -Wvla -Wextra -Werror -D_GNU_SOURCE -std=c11
 
-SRC_DIR = src
+# Flag comuni
+CFLAGS = -D_GNU_SOURCE -std=c11 -I./headers \
+         -Wall -Wextra -Werror -Wvla
+
+# Flag per build di debug
+GFLAGS_DEBUG = $(CFLAGS) -g -O0 -DDEBUGLOG
+
+SRC_DIR   = src
 BUILD_DIR = build
-GFLAGS_DEBUG = $(CFLAGS) -g -O0 -Wall -D DEBUGLOG
-DEBUG = gdb
-AR = ar
 
-CFLAGS  := -D_GNU_SOURCE -std=c11 -I./headers
+SRC = src/cart.c src/bus.c src/mmu.c src/ppu.c src/cpu.c src/opcodes.c src/debug.c src/main.c
+BIN = bin/easygb
 
-SRC := src/cart.c src/mmu.c src/ppu.c src/cpu.c src/main.c
-BIN := bin/easygb
-
-.PHONY: all
+.PHONY: all clean run_pk run_cpu_instrs
 
 all: $(BIN)
 
 $(BIN): $(SRC)
 	@mkdir -p bin
-	gcc $(GFLAGS_DEBUG) -o $(BIN) $(SRC) $(LIBS)
+	$(CC) $(GFLAGS_DEBUG) -o $(BIN) $(SRC) $(LIBS)
 
+# Run Pokémon (quando un giorno sarà giocabile… non oggi)
 run_pk: $(BIN)
 	$(BIN) input/Pokemon_Red.gb
+
+# Target comodo per una ROM di test CPU
+run_cpu_instrs: $(BIN)
+	$(BIN) input/test_roms/cpu_instrs/cpu_instrs.gb
+
+run_cpu_instrs_sing_01: $(BIN)
+	$(BIN) input/test_roms/cpu_instrs/individual/01-special.gb
+
+run_cpu_instrs_sing_02: $(BIN)
+	$(BIN) input/test_roms/cpu_instrs/individual/02-interrupts.gb
+
+run_cpu_instrs_sing_03: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/03-op sp,hl.gb"
+
+run_cpu_instrs_sing_04: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/04-op r,imm.gb"
+
+run_cpu_instrs_sing_05: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/05-op rp.gb"
+
+run_cpu_instrs_sing_06: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/06-ld r,r.gb"
+
+run_cpu_instrs_sing_07: $(BIN)
+	$(BIN) input/test_roms/cpu_instrs/individual/07-jr,jp,call,ret,rst.gb
+
+run_cpu_instrs_sing_08: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/08-misc instrs.gb"
+
+run_cpu_instrs_sing_09: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/09-op r,r.gb"
+
+run_cpu_instrs_sing_10: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/10-bit ops.gb"
+
+run_cpu_instrs_sing_11: $(BIN)
+	$(BIN) "input/test_roms/cpu_instrs/individual/11-op a,(hl).gb"
 
 clean:
 	rm -rf bin
