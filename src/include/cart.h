@@ -27,6 +27,7 @@ struct header{
 typedef struct header * header;
 
 struct cartridge {
+    uint8_t * raw_cart;
     header head;
 };
 

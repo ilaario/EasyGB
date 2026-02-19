@@ -18,6 +18,27 @@ cartridge read_cart(const char* filepath){
     }
 
     read_cart -> head = read_header();
+
+    fseek(cartridge_pointer, 0L, SEEK_END);
+    size_t file_size = ftell(cartridge_pointer);
+    printf("[INFO] File size: %zu\n", file_size);
+    rewind(cartridge_pointer);
+
+    read_cart -> raw_cart = (uint8_t*)malloc(file_size * sizeof(uint8_t));
+    if(read_cart -> raw_cart == NULL) {
+        perror("[ERROR] Error allocating raw cart!");
+        exit(EXIT_FAILURE);
+    }
+
+    size_t read_bytes = fread(read_cart -> raw_cart, 1, file_size, cartridge_pointer);
+    if(read_bytes != file_size){
+        perror("[ERROR] ROM truncated or corrupted!");
+        printf("{DEBUG} Read %zu, instead of %zu\n", read_bytes, file_size);
+        exit(EXIT_FAILURE);
+    }
+
+    
+
     return read_cart;
 }
 
