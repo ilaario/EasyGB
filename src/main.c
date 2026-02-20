@@ -1,6 +1,7 @@
 #include "include/cpu.h"
 #include "include/mmu.h"
 #include "include/ppu.h"
+#include "include/apu.h"
 #include "include/debug.h"
 #include "include/renderer.h"
 
@@ -8,6 +9,7 @@ cartridge cart;
 bus mbus;
 cpu mcpu;
 ppu mppu;
+apu mapu;
 gb_renderer mrender;
 
 int main(int argc, char const *argv[]){
@@ -29,6 +31,7 @@ int main(int argc, char const *argv[]){
     if (mrender == NULL) {
         return EXIT_FAILURE;
     }
+    mapu = apu_init(mbus);
     
     // snapshot_bus(mbus);
 
@@ -44,6 +47,7 @@ int main(int argc, char const *argv[]){
         while (running && frame_cycles < cycles_per_frame) {
             int cycles = cpu_step(mcpu);
             ppu_step(mppu, cycles);
+            apu_step(mapu, cycles);
             frame_cycles += cycles;
 
             if (mppu->frame_ready) {
@@ -58,6 +62,7 @@ int main(int argc, char const *argv[]){
 
         int cycles = cpu_step(mcpu);
         ppu_step(mppu, cycles);
+        apu_step(mapu, cycles);
 
         if (mppu->frame_ready) {
             renderer_present(mrender, mppu->framebuffer);
@@ -66,6 +71,7 @@ int main(int argc, char const *argv[]){
 #endif
     }
 
+    apu_destroy(mapu);
     renderer_destroy(mrender);
     
     return 0;

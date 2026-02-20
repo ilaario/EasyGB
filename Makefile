@@ -8,7 +8,7 @@ CFLAGS = -D_GNU_SOURCE -std=c11 -I./headers \
 DBG_FLAGS = -g -O0 -DDEBUGLOG
 REL_FLAGS = -O2
 
-SRC = src/cart.c src/bus.c src/mmu.c src/ppu.c src/cpu.c src/opcodes.c src/debug.c src/renderer.c src/main.c
+SRC = src/cart.c src/bus.c src/mmu.c src/ppu.c src/apu.c src/cpu.c src/opcodes.c src/debug.c src/renderer.c src/main.c
 BIN = bin/easygb
 BIN_SDL = bin/easygb_sdl
 BIN_SDL_DBG = bin/easygb_sdl_dbg

@@ -13,6 +13,7 @@ struct Bus_internal {
     uint8_t hram[127];
     uint8_t oam[160];
     uint8_t io[0x80];
+    uint32_t io_write_serial[0x80];
     uint8_t ie;
     uint8_t joypad_pressed;
 
@@ -398,6 +399,7 @@ bus bus_init(cartridge cart) {
     memset(rbus->mem->oam,  0x00, 160);
     memset(rbus->mem->hram, 0x00, 127);
     memset(rbus->mem->io,   0x00, 0x80);
+    memset(rbus->mem->io_write_serial, 0x00, sizeof(rbus->mem->io_write_serial));
 
     // --- Default mapper state ---
     rbus->mem->mapper_type = cart->head->cart_type;
@@ -687,6 +689,7 @@ void bus_write8(bus b, uint16_t addr, uint8_t val) {
             b->mem->io[0x00] = (uint8_t)(0xC0u | (val & 0x30u) | 0x0Fu);
             uint8_t new_joyp = joyp_compute(b);
             joyp_request_irq_on_falling_edge(b, old_joyp, new_joyp);
+            b->mem->io_write_serial[0x00]++;
             BUS_LOG_W8(addr, val);
             return;
         }
@@ -696,6 +699,7 @@ void bus_write8(bus b, uint16_t addr, uint8_t val) {
         }
         b->mem->io[addr - 0xFF00] = val;
         handle_special_io_write(b, addr, val);
+        b->mem->io_write_serial[addr - 0xFF00]++;
         BUS_LOG_W8(addr, val);
         return;
     }
@@ -744,6 +748,16 @@ void bus_set_joypad_state(bus b, uint8_t pressed_mask) {
 
 bool bus_boot_rom_active(bus b) {
     return b != NULL && b->mem != NULL && b->mem->boot_rom_enabled;
+}
+
+uint32_t bus_get_io_write_serial(bus b, uint16_t addr) {
+    if (b == NULL || b->mem == NULL) {
+        return 0;
+    }
+    if (addr < 0xFF00u || addr > 0xFF7Fu) {
+        return 0;
+    }
+    return b->mem->io_write_serial[addr - 0xFF00u];
 }
 
 static inline uint16_t timer_period_cycles(uint8_t tac) {

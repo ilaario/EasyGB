@@ -48,6 +48,7 @@ void    bus_tick(bus b, int cycles);
 void    bus_set_ly(bus b, uint8_t ly);
 void    bus_set_joypad_state(bus b, uint8_t pressed_mask);
 bool    bus_boot_rom_active(bus b);
+uint32_t bus_get_io_write_serial(bus b, uint16_t addr);
 
 bus bus_init(cartridge cart);
 void snapshot_bus(bus b);
