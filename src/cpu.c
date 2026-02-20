@@ -137,26 +137,37 @@ cpu cpu_init(bus b){
 
     rcpu -> mbus = b;
 
-    // Set registers as if BIOS ended
-    rcpu -> A = 0x01;
-    rcpu -> F = 0xB0;
-
-    rcpu -> B = 0x00;
-    rcpu -> C = 0x13;
-
-    rcpu -> D = 0x00;
-    rcpu -> E = 0xD8;
-
-    rcpu -> H = 0x01;
-    rcpu -> L = 0x4D;
-
-    rcpu -> SP = 0xFFFE;
-    rcpu -> PC = 0x0100;
+    if (bus_boot_rom_active(b)) {
+        // Power-on-like state; boot ROM will initialize registers/IO.
+        rcpu->A = 0x00;
+        rcpu->F = 0x00;
+        rcpu->B = 0x00;
+        rcpu->C = 0x00;
+        rcpu->D = 0x00;
+        rcpu->E = 0x00;
+        rcpu->H = 0x00;
+        rcpu->L = 0x00;
+        rcpu->SP = 0x0000;
+        rcpu->PC = 0x0000;
+        rcpu->ime = false;
+    } else {
+        // Set registers as if BIOS ended.
+        rcpu->A = 0x01;
+        rcpu->F = 0xB0;
+        rcpu->B = 0x00;
+        rcpu->C = 0x13;
+        rcpu->D = 0x00;
+        rcpu->E = 0xD8;
+        rcpu->H = 0x01;
+        rcpu->L = 0x4D;
+        rcpu->SP = 0xFFFE;
+        rcpu->PC = 0x0100;
+        rcpu->ime = true;
+    }
 
     // internal state
     rcpu -> halted = false;
     rcpu -> halt_bug = false;
-    rcpu -> ime = true;
     rcpu -> ime_pending = 0;
     rcpu -> cycles = 0;
 

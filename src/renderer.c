@@ -1,6 +1,9 @@
 #include "include/renderer.h"
+#include "include/bus.h"
 
+#ifdef EASYGB_USE_SDL
 #include <SDL2/SDL.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,11 +13,18 @@ enum {
 };
 
 struct GBRenderer {
+#ifdef EASYGB_USE_SDL
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     uint32_t pixels[LCD_WIDTH * LCD_HEIGHT];
+    uint8_t joypad_state;
+#else
+    uint8_t joypad_state;
+#endif
 };
+
+#ifdef EASYGB_USE_SDL
 
 static inline uint32_t shade_to_rgba(uint8_t shade) {
     switch (shade & 0x03u) {
@@ -99,7 +109,9 @@ void renderer_destroy(gb_renderer r) {
 }
 
 bool renderer_poll(gb_renderer r) {
-    (void)r;
+    if (r == NULL) {
+        return false;
+    }
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -111,7 +123,29 @@ bool renderer_poll(gb_renderer r) {
         }
     }
 
+    const uint8_t *keys = SDL_GetKeyboardState(NULL);
+    uint8_t state = 0;
+
+    if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) state |= JOY_RIGHT;
+    if (keys[SDL_SCANCODE_LEFT]  || keys[SDL_SCANCODE_A]) state |= JOY_LEFT;
+    if (keys[SDL_SCANCODE_UP]    || keys[SDL_SCANCODE_W]) state |= JOY_UP;
+    if (keys[SDL_SCANCODE_DOWN]  || keys[SDL_SCANCODE_S]) state |= JOY_DOWN;
+
+    if (keys[SDL_SCANCODE_Z] || keys[SDL_SCANCODE_K]) state |= JOY_A;
+    if (keys[SDL_SCANCODE_X] || keys[SDL_SCANCODE_J]) state |= JOY_B;
+    if (keys[SDL_SCANCODE_RETURN] || keys[SDL_SCANCODE_SPACE]) state |= JOY_START;
+    if (keys[SDL_SCANCODE_BACKSPACE] || keys[SDL_SCANCODE_RSHIFT]) state |= JOY_SELECT;
+
+    r->joypad_state = state;
+
     return true;
+}
+
+uint8_t renderer_get_joypad_state(gb_renderer r) {
+    if (r == NULL) {
+        return 0;
+    }
+    return r->joypad_state;
 }
 
 void renderer_present(gb_renderer r, uint8_t framebuffer[144][160]) {
@@ -127,3 +161,36 @@ void renderer_present(gb_renderer r, uint8_t framebuffer[144][160]) {
     SDL_RenderCopy(r->renderer, r->texture, NULL, NULL);
     SDL_RenderPresent(r->renderer);
 }
+
+#else
+
+gb_renderer renderer_init(int scale) {
+    (void)scale;
+    gb_renderer r = (gb_renderer)calloc(1, sizeof(struct GBRenderer));
+    if (r == NULL) {
+        fprintf(stderr, "[ERROR] Renderer allocation failed\n");
+        return NULL;
+    }
+    return r;
+}
+
+void renderer_destroy(gb_renderer r) {
+    free(r);
+}
+
+bool renderer_poll(gb_renderer r) {
+    (void)r;
+    return true;
+}
+
+uint8_t renderer_get_joypad_state(gb_renderer r) {
+    (void)r;
+    return 0;
+}
+
+void renderer_present(gb_renderer r, uint8_t framebuffer[144][160]) {
+    (void)r;
+    (void)framebuffer;
+}
+
+#endif

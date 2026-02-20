@@ -33,8 +33,28 @@ int main(int argc, char const *argv[]){
     // snapshot_bus(mbus);
 
     bool running = true;
+#ifdef EASYGB_USE_SDL
+    const int cycles_per_frame = 70224; // 154 lines * 456 dots
+#endif
     while (running) {
+#ifdef EASYGB_USE_SDL
         running = renderer_poll(mrender);
+        bus_set_joypad_state(mbus, renderer_get_joypad_state(mrender));
+        int frame_cycles = 0;
+        while (running && frame_cycles < cycles_per_frame) {
+            int cycles = cpu_step(mcpu);
+            ppu_step(mppu, cycles);
+            frame_cycles += cycles;
+
+            if (mppu->frame_ready) {
+                renderer_present(mrender, mppu->framebuffer);
+                mppu->frame_ready = false;
+                break;
+            }
+        }
+#else
+        running = renderer_poll(mrender);
+        bus_set_joypad_state(mbus, renderer_get_joypad_state(mrender));
 
         int cycles = cpu_step(mcpu);
         ppu_step(mppu, cycles);
@@ -43,6 +63,7 @@ int main(int argc, char const *argv[]){
             renderer_present(mrender, mppu->framebuffer);
             mppu->frame_ready = false;
         }
+#endif
     }
 
     renderer_destroy(mrender);

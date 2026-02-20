@@ -21,6 +21,7 @@ struct PPU {
     uint8_t  ly;
     bool     frame_ready;
     bool     lyc_equal_last;
+    uint64_t frame_counter;
 
     uint8_t  framebuffer[144][160];
 };
