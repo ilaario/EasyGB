@@ -67,6 +67,9 @@ $(BIN_SDL_DBG): $(SRC)
 run_pk: $(BIN_SDL)
 	$(BIN_SDL) input/Pokemon_Red.gb
 
+run_test: $(BIN_SDL)
+	$(BIN_SDL) input/dmg_test_prog_ver1.gb
+
 run_pk_dbg: $(BIN_SDL_DBG)
 	$(BIN_SDL_DBG) input/Pokemon_Red.gb
 
