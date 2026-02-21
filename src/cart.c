@@ -69,10 +69,11 @@ header read_header(){
     printf("Done!\n");
 
     printf("[INFO] Reading Game name: ");
-    for(int i = 0x0134; i < 0x0145; i++){
-        read_header -> title[i - 0x0134] = read_header -> raw_header[i];
+    for(int i = 0x0134; i < 0x0144; i++){
+        read_header -> title[i - 0x0134] = (char)read_header -> raw_header[i];
         printf("%c", read_header -> title[i - 0x0134]);
     }
+    read_header -> title[0x0144 - 0x0134] = '\0';
     printf("\n");
 
     read_header -> cgb_flag = read_header -> raw_header[0x0143];

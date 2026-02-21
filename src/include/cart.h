@@ -17,7 +17,7 @@ struct header{
 
     uint8_t   entry_point[8];
     uint8_t   logo[48];
-    char      title[16];
+    char      title[17];
     uint8_t   cgb_flag;
     uint8_t   sgb_flag;
     uint8_t   cart_type;

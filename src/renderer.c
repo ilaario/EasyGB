@@ -13,14 +13,13 @@ enum {
 };
 
 struct GBRenderer {
+    uint8_t joypad_state;
+    int speed_multiplier;
 #ifdef EASYGB_USE_SDL
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     uint32_t pixels[LCD_WIDTH * LCD_HEIGHT];
-    uint8_t joypad_state;
-#else
-    uint8_t joypad_state;
 #endif
 };
 
@@ -51,6 +50,7 @@ gb_renderer renderer_init(int scale) {
         SDL_Quit();
         return NULL;
     }
+    r->speed_multiplier = 1;
 
     r->window = SDL_CreateWindow(
         "EasyGB",
@@ -65,7 +65,7 @@ gb_renderer renderer_init(int scale) {
     }
 
     r->renderer = SDL_CreateRenderer(
-        r->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
+        r->window, -1, SDL_RENDERER_ACCELERATED
     );
     if (r->renderer == NULL) {
         fprintf(stderr, "[ERROR] SDL_CreateRenderer failed: %s\n", SDL_GetError());
@@ -121,6 +121,24 @@ bool renderer_poll(gb_renderer r) {
         if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
             return false;
         }
+        if (event.type == SDL_KEYDOWN && event.key.repeat == 0) {
+            switch (event.key.keysym.sym) {
+            case SDLK_1:
+            case SDLK_KP_1:
+                r->speed_multiplier = 1;
+                break;
+            case SDLK_2:
+            case SDLK_KP_2:
+                r->speed_multiplier = 2;
+                break;
+            case SDLK_3:
+            case SDLK_KP_3:
+                r->speed_multiplier = 3;
+                break;
+            default:
+                break;
+            }
+        }
     }
 
     const uint8_t *keys = SDL_GetKeyboardState(NULL);
@@ -148,6 +166,13 @@ uint8_t renderer_get_joypad_state(gb_renderer r) {
     return r->joypad_state;
 }
 
+int renderer_get_speed_multiplier(gb_renderer r) {
+    if (r == NULL || r->speed_multiplier < 1) {
+        return 1;
+    }
+    return r->speed_multiplier;
+}
+
 void renderer_present(gb_renderer r, uint8_t framebuffer[144][160]) {
     for (int y = 0; y < LCD_HEIGHT; y++) {
         uint32_t *dst = &r->pixels[y * LCD_WIDTH];
@@ -171,6 +196,7 @@ gb_renderer renderer_init(int scale) {
         fprintf(stderr, "[ERROR] Renderer allocation failed\n");
         return NULL;
     }
+    r->speed_multiplier = 1;
     return r;
 }
 
@@ -186,6 +212,11 @@ bool renderer_poll(gb_renderer r) {
 uint8_t renderer_get_joypad_state(gb_renderer r) {
     (void)r;
     return 0;
+}
+
+int renderer_get_speed_multiplier(gb_renderer r) {
+    (void)r;
+    return 1;
 }
 
 void renderer_present(gb_renderer r, uint8_t framebuffer[144][160]) {
