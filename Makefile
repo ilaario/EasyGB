@@ -65,6 +65,9 @@ $(BIN_SDL_DBG): $(SRC)
 	@mkdir -p bin
 	$(CC) $(SDL_BUILD_FLAGS_DBG) -o $(BIN_SDL_DBG) $(SRC) $(SDL_LIBS) $(LIBS)
 
+run: $(BIN_SDL)
+	$(BIN_SDL)
+
 # Run Pokémon with SDL renderer window
 run_pk: $(BIN_SDL)
 	$(BIN_SDL) input/Pokemon_Red.gb
